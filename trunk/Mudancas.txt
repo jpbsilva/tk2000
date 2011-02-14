@@ -1,0 +1,7 @@
+Mudanças na versão 0.0.0.2
+
+ - Corrigido o carregamento das configurações da expansão
+
+Mudanças na versão 0.0.0.1
+
+ - Primeira Versão
