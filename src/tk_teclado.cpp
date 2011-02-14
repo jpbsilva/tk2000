@@ -127,13 +127,10 @@ static char ClipboardCurrChar(bool bIncPtr)
 	char nKey;
 	int nInc = 1;
 
-	if((lptstr[0] == 0x0D) && (lptstr[1] == 0x0A))
-	{
+	if((lptstr[0] == 0x0D) && (lptstr[1] == 0x0A)) {
 		nKey = 0x0D;
 		nInc = 2;
-	}
-	else
-	{
+	} else {
 		nKey = lptstr[0];
 	}
 
@@ -241,10 +238,18 @@ void KeybInicia(void)
 //===========================================================================
 void KeybAtualiza(DWORD totalcycles)
 {
-	if (CicloUT)
-	{
-		if (g_nCumulativeCycles - CicloUT > KBMAXCICLOS)
-		{
+	if(g_bPasteFromClipboard) {
+		ClipboardInit();
+	}
+	if(g_bClipboardActive) {
+		if(*lptstr == 0)
+			ClipboardDone();
+		else
+			KeybQueueKeypress(ClipboardCurrChar(true), true);
+	}
+
+	if (CicloUT) {
+		if ((g_nCumulativeCycles - CicloUT > KBMAXCICLOS)) {
 			strcpy(ListaTeclas, ListaTeclas+1);
 			if (strlen(ListaTeclas))
 				CicloUT = g_nCumulativeCycles;
@@ -267,11 +272,11 @@ void KeybFinaliza(void)
 //===========================================================================
 void KeybQueueKeypress (int key, BOOL ascii)
 {
-	int shift = GetKeyState(VK_SHIFT);
+	int shift = 0;
+	if (!ascii)
+		shift = GetKeyState(VK_SHIFT);
 
 	if (GetKeyState(VK_MENU) < 0)
-		return;
-	if (ascii)
 		return;
 /*
 	{
@@ -387,17 +392,6 @@ BYTE __stdcall KeybKBIN (WORD programcounter, BYTE address, BYTE write, BYTE val
 
 	if (bCTRL && (GetKeyState(VK_CONTROL) < 0))
 		return result | 0x01;
-
-	if(g_bPasteFromClipboard)
-		ClipboardInit();
-
-	if(g_bClipboardActive)
-	{
-		if(*lptstr == 0)
-			ClipboardDone();
-		else
-			KeybQueueKeypress(ClipboardCurrChar(true), false);
-	}
 
 	KeybAtualiza(0);
 	t = (BYTE)ListaTeclas[0];
