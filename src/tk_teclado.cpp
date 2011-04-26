@@ -244,8 +244,10 @@ void KeybAtualiza(DWORD totalcycles)
 	if(g_bClipboardActive) {
 		if(*lptstr == 0)
 			ClipboardDone();
-		else
+		else {
 			KeybQueueKeypress(ClipboardCurrChar(true), true);
+			//
+		}
 	}
 
 	if (CicloUT) {
