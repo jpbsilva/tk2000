@@ -48,6 +48,7 @@
 #define VK_NPPONTO    0xC2
 
 #define KBMAXCICLOS   15000
+#define KBMAXCICLOS2   8000
 
 #define FLGINVSH      0x01
 
@@ -74,7 +75,7 @@ BYTE  bCTRL   = 0;
 TVk   Teclas[256];
 Convs Conversoes[256];
 char  *ListaTeclas;
-unsigned __int64 CicloUT = 0;
+unsigned __int64 CicloUT = 0, CicloUT2 = 0;
 static bool g_bPasteFromClipboard = false;
 static bool g_bClipboardActive = false;
 static HGLOBAL hglb = NULL;
@@ -132,6 +133,8 @@ static char ClipboardCurrChar(bool bIncPtr)
 		nInc = 2;
 	} else {
 		nKey = lptstr[0];
+		if (nKey > 0x60 && nKey < 0x7B)
+			nKey -= 0x20;
 	}
 
 	if(bIncPtr)
@@ -240,14 +243,7 @@ void KeybAtualiza(DWORD totalcycles)
 {
 	if(g_bPasteFromClipboard) {
 		ClipboardInit();
-	}
-	if(g_bClipboardActive) {
-		if(*lptstr == 0)
-			ClipboardDone();
-		else {
-			KeybQueueKeypress(ClipboardCurrChar(true), true);
-			//
-		}
+		CicloUT2 = g_nCumulativeCycles;
 	}
 
 	if (CicloUT) {
@@ -257,6 +253,21 @@ void KeybAtualiza(DWORD totalcycles)
 				CicloUT = g_nCumulativeCycles;
 			else
 				CicloUT = 0;
+			CicloUT2 = g_nCumulativeCycles;
+		}
+	}
+
+	if (CicloUT2) {
+		if ((g_nCumulativeCycles - CicloUT2 > KBMAXCICLOS2)) {
+			CicloUT2 = 0;
+			if(g_bClipboardActive) {
+				if(*lptstr == 0) {
+					ClipboardDone();
+				} else {
+					KeybQueueKeypress(ClipboardCurrChar(true), true);
+					CicloUT = g_nCumulativeCycles;
+				}
+			}
 		}
 	}
 };
@@ -356,7 +367,7 @@ void KeybQueueKeypress (int key, BOOL ascii)
 		} else {
 			strncat(ListaTeclas, temp, 1); // Adiciona 1 tecla na lista
 		}
-		CicloUT = g_nCumulativeCycles; // Memoriza Ciclo da Ultima Tecla
+		CicloUT  = g_nCumulativeCycles; // Memoriza Ciclo da Ultima Tecla
 	}
 }
 
@@ -396,15 +407,18 @@ BYTE __stdcall KeybKBIN (WORD programcounter, BYTE address, BYTE write, BYTE val
 		return result | 0x01;
 
 	KeybAtualiza(0);
+
 	t = (BYTE)ListaTeclas[0];
+
 	for (l = 0; l < 8; l++)
 		if (bKBOUT == (1 << l))
 		{
 			result |= JoyVerificaTecla(l);
 			if (l == 0 && (t & 0x80))
 				result |= 0x01; // SHIFT
-			if (t && l == (t & 0x07))
+			if (t && l == (t & 0x07)) {
 				result |= 1 << ((t & 0x38) >> 3);
+			}
 			return result;
 		}
 	return result;
