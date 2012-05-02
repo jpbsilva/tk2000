@@ -23,7 +23,8 @@ extern int ColarRapido;
 void KeybInicia(void);
 void KeybAtualiza(DWORD totalcycles);
 void KeybFinaliza(void);
-void KeybQueueKeypress (int, BOOL);
+void KeybQueueKeypress (int key, BOOL down, BOOL ascii);
+bool KeybIsPasting();
 
 // Protótipos Softswitches
 BYTE __stdcall KeybCTRL0(WORD, BYTE, BYTE, BYTE);

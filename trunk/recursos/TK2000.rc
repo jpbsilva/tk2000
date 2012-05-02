@@ -68,6 +68,9 @@ BEGIN
                     WS_TABSTOP
     CONTROL         "Scan Lines",cbScanLines,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,158,83,51,10
+
+	CONTROL         "Colar Rápido",cbColarRapido,"Button",BS_AUTOCHECKBOX |
+					WS_TABSTOP,158,67,53,10
 END
 
 DIALOGO_EXPORTAR DIALOGEX 0, 0, 194, 69

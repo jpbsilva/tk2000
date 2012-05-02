@@ -341,7 +341,7 @@ LRESULT CALLBACK FrameWndProc (HWND   window,
 				if ((!JoyProcessKey((int)wparam,extended,1,autorep)) &&
 									(mode != MODE_LOGO))
 				{
-					KeybQueueKeypress((int)wparam,0);
+					KeybQueueKeypress((int)wparam, true, false);
 				}
 			}
 			else if (mode == MODE_DEBUG)
@@ -352,7 +352,8 @@ LRESULT CALLBACK FrameWndProc (HWND   window,
 		break;
 
 		case WM_KEYUP:
-			JoyProcessKey((int)wparam,((lparam & 0x01000000) != 0),0,0);
+			JoyProcessKey((int)wparam, ((lparam & 0x01000000) != 0), 0, 0);
+			KeybQueueKeypress((int)wparam, false, false);
 		break;
 
 
@@ -592,6 +593,8 @@ BOOL CALLBACK ConfigDlgProc (HWND   window,
 						VideoRedrawScreen();
 					}
 
+					ColarRapido = IsDlgButtonChecked(window, cbColarRapido) ? 1 : 0;
+
 					if (videotype != newvidtype)
 					{
 						videotype = newvidtype;
@@ -615,6 +618,7 @@ BOOL CALLBACK ConfigDlgProc (HWND   window,
 					SAVE(EMUVELCPU  ,speed);
 					SAVE(EMUVIDEO   ,videotype);
 					SAVE(EMUSCANLINES, ScanLines); // Scan Lines
+					SAVE(EMUCOLARRAPIDO, ColarRapido);
 #undef SAVE
 					EndDialog(window,1);
 					if (afterclose)
@@ -668,7 +672,8 @@ BOOL CALLBACK ConfigDlgProc (HWND   window,
 				SetFocus(GetDlgItem(window, custom ? slVel : rbVelReal));
 				EnableTrackbar(window,custom);
 			}
-			CheckDlgButton(window, cbScanLines, ScanLines ? BST_CHECKED : BST_UNCHECKED); // Scan Lines
+			CheckDlgButton(window, cbScanLines,   ScanLines   ? BST_CHECKED : BST_UNCHECKED);
+			CheckDlgButton(window, cbColarRapido, ColarRapido ? BST_CHECKED : BST_UNCHECKED);
 			afterclose = 0;
 		break;
 	}

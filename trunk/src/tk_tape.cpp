@@ -41,8 +41,8 @@ static int  TamDados  = 0;
 // Protótipos
 
 // Funções Internas
-void TapePegaTitulo(char *NomeImagem)
-{
+//===========================================================================
+void TapePegaTitulo(char *NomeImagem) {
 	BOOL found = 0;
 	int  loop  = 0;
 
@@ -61,8 +61,7 @@ void TapePegaTitulo(char *NomeImagem)
 		CharLowerBuff(imagetitle+1, strlen(imagetitle+1));
 	strncpy(NomeTitulo, imagetitle, 127);
 	NomeTitulo[127] = 0;
-	if (imagetitle[0])
-	{
+	if (imagetitle[0]) {
 		char *dot = imagetitle;
 		if (strrchr(dot,'.'))
 			dot = strrchr(dot,'.');
@@ -75,27 +74,23 @@ void TapePegaTitulo(char *NomeImagem)
 
 // Funções Globais
 //===========================================================================
-void TapeInicializa()
-{
+void TapeInicializa() {
 	//
 }
 
 //===========================================================================
-void TapeAtualiza(DWORD totalcycles)
-{
+void TapeAtualiza(DWORD totalcycles) {
 	//FrameRefreshStatus(DRAW_LEDS);
 }
 
 //===========================================================================
-void TapeFinaliza()
-{
+void TapeFinaliza() {
 	TapeRemove();
 }
 
 #ifdef _WINDOWS
 //===========================================================================
-void TapeSelect()
-{
+void TapeSelect() {
 	char directory[MAX_PATH] = "";
 	char filename[MAX_PATH]  = "";
 	char title[40];
@@ -113,15 +108,13 @@ void TapeSelect()
 	ofn.lpstrInitialDir = directory;
 	ofn.Flags           = OFN_PATHMUSTEXIST;
 	ofn.lpstrTitle      = title;
-	if (GetOpenFileName(&ofn))
-	{
+	if (GetOpenFileName(&ofn)) {
 		int error;
 
 		if ((!ofn.nFileExtension) || !filename[ofn.nFileExtension])
 			strcat(filename,".ct2");
 		error = TapeInsere(filename, ofn.Flags & OFN_READONLY, 1);
-		if (!error)
-		{
+		if (!error) {
 			//strcpy(NomeTitulo, filename + ofn.nFileOffset);
 			TapePegaTitulo(filename + ofn.nFileOffset);
 			filename[ofn.nFileOffset] = 0;
@@ -135,15 +128,13 @@ void TapeSelect()
 }
 #else // _WINDOWS
 //===========================================================================
-void TapeSelect()
-{
+void TapeSelect() {
 	// Implementar no linux
 }
 #endif // _WINDOWS
 
 //===========================================================================
-int TapeInsere(char *imagefilename, int writeprotected, int createifnecessary)
-{
+int TapeInsere(char *imagefilename, int writeprotected, int createifnecessary) {
 	TCh    Ch;
 
 	if (HandleArq)
@@ -161,8 +152,7 @@ int TapeInsere(char *imagefilename, int writeprotected, int createifnecessary)
 	fread(Buffer, 1, TamBuffer, HandleArq);
 	fclose(HandleArq);
 	memcpy(&Ch, Buffer, 4);
-	if (strncmp((char*)&Ch, CT2_MAGIC, 4))
-	{
+	if (strncmp((char*)&Ch, CT2_MAGIC, 4)) {
 		free(Buffer);
 		TamBuffer = 0;
 		return 2; // retorna erro
@@ -172,20 +162,16 @@ int TapeInsere(char *imagefilename, int writeprotected, int createifnecessary)
 }
 
 //===========================================================================
-void TapeRemove()
-{
-	if (TamBuffer)
-	{
+void TapeRemove() {
+	if (TamBuffer) {
 		free(Buffer);
 		TamBuffer = 0;
 	}
 }
 
 //===========================================================================
-void TapeBotao(int Botao)
-{
-	switch(Botao)
-	{
+void TapeBotao(int Botao) {
+	switch(Botao) {
 		case TB_REW:
 			PosBuffer = 0;
 		break;
@@ -201,13 +187,12 @@ void TapeBotao(int Botao)
 void TapeNotifyInvalidImage (char* imagefilename,int error)
 {
 	char buffer[400];
-	switch (error)
-	{
+	switch (error) {
 
 		case 1:
 			sprintf(buffer, "Erro ao abrir o arquivo %s.", imagefilename);
 			FrameMostraMensagemAdvertencia(buffer);
-		break;
+			break;
 
 		case 2:
 			sprintf(buffer,
@@ -215,59 +200,49 @@ void TapeNotifyInvalidImage (char* imagefilename,int error)
 					"da imagem do disco não foi reconhecido.",
 					imagefilename);
 			FrameMostraMensagemAdvertencia(buffer);
-		break;
+			break;
 
 		default:
 			// IGNORE OTHER ERRORS SILENTLY
-		return;
+			return;
 	}
 }
 
 //===========================================================================
-char *TapeNomeImagem()
-{
+char *TapeNomeImagem() {
 	return NomeTitulo;
 }
 
 //===========================================================================
-void TapePegaStatusLed(int *Led)
-{
+void TapePegaStatusLed(int *Led) {
 	*Led = (PosBuffer > 0 && PosBuffer < TamBuffer);
 }
 
 // Softswitches
 //===========================================================================
-BYTE __stdcall TapeMOTOR(WORD programcounter, BYTE address, BYTE write, BYTE value)
-{
+BYTE __stdcall TapeMOTOR(WORD programcounter, BYTE address, BYTE write, BYTE value) {
 	return MemReturnRandomData(1);
 }
 
 //===========================================================================
-BYTE __stdcall TapeCASOUT(WORD programcounter, BYTE address, BYTE write, BYTE value)
-{
+BYTE __stdcall TapeCASOUT(WORD programcounter, BYTE address, BYTE write, BYTE value) {
 	return MemReturnRandomData(1);
 }
 
 //===========================================================================
-BYTE __stdcall TapeCASIN(WORD programcounter, BYTE address, BYTE write, BYTE value)
-{
+BYTE __stdcall TapeCASIN(WORD programcounter, BYTE address, BYTE write, BYTE value) {
 	TCh    Ch;
 
-	while (PosBuffer < TamBuffer)
-	{
-		if (TamDados)
-		{
+	while (PosBuffer < TamBuffer) {
+		if (TamDados) {
 			char c = Buffer[PosBuffer++];
 
 			TamDados--;
 			FrameRefreshStatus(DRAW_LEDS);
 			return c;
-		}
-		else
-		{
+		} else {
 			memcpy(&Ch, (Buffer + PosBuffer++), 4);
-			if (!strncmp((char *)&Ch.ID, CT2_DADOS, 2))
-			{
+			if (!strncmp((char *)&Ch.ID, CT2_DADOS, 2)) {
 				PosBuffer += 3;
 				TamDados = Ch.Tam;
 			}
@@ -278,15 +253,12 @@ BYTE __stdcall TapeCASIN(WORD programcounter, BYTE address, BYTE write, BYTE val
 }
 
 //===========================================================================
-BYTE __stdcall TapeCASIN2(WORD programcounter, BYTE address, BYTE write, BYTE value)
-{
+BYTE __stdcall TapeCASIN2(WORD programcounter, BYTE address, BYTE write, BYTE value) {
 	TCh    Ch;
 
-	while (PosBuffer < TamBuffer)
-	{
+	while (PosBuffer < TamBuffer) {
 		memcpy(&Ch, (Buffer + PosBuffer++), 4);
-		if (!strncmp((char *)Ch.ID, CT2_CAB_B, 2))
-		{
+		if (!strncmp((char *)Ch.ID, CT2_CAB_B, 2)) {
 			TamDados = 0;
 			PosBuffer += 3;
 			return 1;

@@ -996,11 +996,10 @@ void VideoRealizePalette (HDC dc)
 //===========================================================================
 void VideoRedrawScreen ()
 {
-	if ((mode != MODE_LOGO) && (mode != MODE_DEBUG))
-	{
+//	if ((mode != MODE_LOGO) && (mode != MODE_DEBUG)) {
 		redrawfull = 1;
 		VideoRefreshScreen();
-	}
+//	}
 }
 
 //===========================================================================

@@ -33,6 +33,7 @@
 #define EMUDISCO     "Velocidade Disco Rapida"
 #define EMUSCANLINES "Scan Lines" // Scan Lines
 #define EMUIMPRESSORA "Impressora"
+#define EMUCOLARRAPIDO "Colar Rapido"
 #define ULTIMPEND    "Ultimo End Importacao"
 #define ULTEXPENDI   "Ultimo End Inic Exportacao"
 #define ULTEXPENDF   "Ultimo End Final Exportacao"
