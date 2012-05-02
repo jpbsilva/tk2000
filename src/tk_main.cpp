@@ -86,6 +86,7 @@ void ContinueExecution ()
 
 	fullspeed = ( (speed == SPEED_MAX) || 
 				 (GetKeyState(VK_SCROLL) < 0) ||
+				 (ColarRapido && KeybIsPasting()) ||
 				 (DiskIsSpinning() && enhancedisk));
 
 	if(fullspeed)
@@ -280,16 +281,8 @@ void LoadConfiguration()
 	LOAD(EMUVIDEOM, &monochrome);
 	LOAD(EMUSCANLINES,  &ScanLines); // Scan Lines
 	LOAD(EMUIMPRESSORA, &ImpressoraPorta);
-//	LOAD(EMUSERIAL, &serialport);
-//	LOAD(EMUBANCOS, (DWORD *)&numexpages);
-//	LOAD(EMUDISCORIG, &HDTamanho);
-//	LOAD(SLOT1, &Slots[1]);
-//	LOAD(SLOT2, &Slots[2]);
-//	LOAD(SLOT3, &Slots[3]);
-//	LOAD(SLOT4, &Slots[4]);
-//	LOAD(SLOT5, &Slots[5]);
-//	LOAD(SLOT6, &Slots[6]);
-//	LOAD(SLOT7, &Slots[7]);
+	LOAD(EMUCOLARRAPIDO, &ColarRapido);
+
 #undef LOAD
 	SetCurrentCLK6502();
 }

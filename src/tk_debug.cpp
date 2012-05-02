@@ -32,7 +32,7 @@
 
 #define  BREAKPOINTS     5
 #define  COMMANDLINES    5
-#define  COMMANDS        61
+#define  COMMANDS        63
 #define  MAXARGS         40
 #define  SOURCELINES     19
 #define  STACKLINES      9
@@ -73,6 +73,7 @@ BOOL CmdBreakpointAdd (int args);
 BOOL CmdBreakpointClear (int args);
 BOOL CmdBreakpointDisable (int args);
 BOOL CmdBreakpointEnable (int args);
+BOOL CmdCycleClear (int args);
 BOOL CmdCodeDump (int args);
 BOOL CmdColor (int args);
 BOOL CmdExtBenchmark (int args);
@@ -93,6 +94,7 @@ BOOL CmdPageUp (int args);
 BOOL CmdProfile (int args);
 BOOL CmdRegisterSet (int args);
 BOOL CmdTrace (int args);
+BOOL CmdTraceOut (int args);
 BOOL CmdTraceFile (int args);
 BOOL CmdTraceLine (int args);
 BOOL CmdViewOutput (int args);
@@ -160,6 +162,7 @@ cmdrec command[COMMANDS] = { {"BA"      ,CmdBreakpointAdd},
                              {"BE"      ,CmdBreakpointEnable},
                              {"BPM"     ,CmdBreakpointAdd},
                              {"BW"      ,CmdBlackWhite},
+                             {"CC"      ,CmdCycleClear},
                              {"COLOR"   ,CmdColor},
                              {"D"       ,CmdMemoryDump},
                              {"EXTBENCH",CmdExtBenchmark},
@@ -204,7 +207,8 @@ cmdrec command[COMMANDS] = { {"BA"      ,CmdBreakpointAdd},
                              {"SYM"     ,NULL}, // CmdSymbol
                              {"SZ"      ,CmdFlagSet},
                              {"T"       ,CmdTrace},
-                             {"TF"      ,CmdTraceFile},
+							 {"TO"      ,CmdTraceOut},
+							 {"TF"      ,CmdTraceFile},
                              {"TL"      ,CmdTraceLine},
                              {"TRACE"   ,CmdTrace},
                              {"U"       ,CmdCodeDump},
@@ -507,7 +511,9 @@ BOOL      usingbp       = 0;
 BOOL      usingmemdump  = 0;
 BOOL      usingwatches  = 0;
 BOOL      viewingoutput = 0;
+unsigned __int64 g_dCumulativeCycles = 0;
 
+// Protótipos
 void ComputeTopOffset (WORD centeroffset);
 BOOL DisplayError (LPCTSTR errortext);
 BOOL DisplayHelp (cmdfunction function);
@@ -546,11 +552,17 @@ BOOL CheckBreakpoint (WORD address, BOOL memory)
 BOOL CheckJump (WORD targetaddress)
 {
 	WORD savedpc = regs.pc;
+	unsigned __int64 saved_cc1 = g_nCumulativeCycles;
+	unsigned __int64 saved_cc2 = g_dCumulativeCycles;
+	DWORD saved_cc3            = cumulativecycles;
 	BOOL result;
 
 	InternalSingleStep();
 	result = (regs.pc == targetaddress);
 	regs.pc = savedpc;
+	g_nCumulativeCycles = saved_cc1;
+	g_dCumulativeCycles = saved_cc2;
+	cumulativecycles    = saved_cc3;
 	return result;
 }
 
@@ -687,6 +699,12 @@ BOOL CmdBreakpointEnable (int args) {
   }
 
   return 1;
+}
+
+//===========================================================================
+BOOL CmdCycleClear (int args) {
+	g_dCumulativeCycles = 0;
+	return 1;
 }
 
 //===========================================================================
@@ -978,6 +996,22 @@ BOOL CmdTrace (int args)
 }
 
 //===========================================================================
+BOOL CmdTraceOut (int args)
+{
+	MSG Mensagem;
+	BYTE inst = mem_readb(regs.pc, 0);
+	stepcount = (inst == 0x20) ? -1 : 1;
+	stepline  = 0;
+	stepstart = regs.pc;
+	stepuntil = (inst == 0x20) ? regs.pc+3 : -1;
+	mode = MODE_STEPPING;
+	FrameRefreshStatus(DRAW_TITLE);
+	GetMessage(&Mensagem,(HWND)framewindow,0,0); // evitar duplo enter
+	return 0;
+}
+
+
+//===========================================================================
 BOOL CmdTraceFile (int args) {
   char filename[MAX_PATH];
 
@@ -1003,9 +1037,9 @@ BOOL CmdTraceLine (int args) {
 
 //===========================================================================
 BOOL CmdViewOutput (int args) {
-  VideoRedrawScreen();
-  viewingoutput = 1;
-  return 0;
+	VideoRedrawScreen();
+	viewingoutput = 1;
+	return 0;
 }
 
 //===========================================================================
@@ -1845,6 +1879,26 @@ void DebugDisplay (BOOL drawbackground) {
     while (line--)
       DrawCommandLine(dc,line);
   }
+  // Draw Cumulative Cycles
+  {
+		RECT linerect;
+		char valuestr[16];
+
+		linerect.left   = SCREENSPLIT2;
+		linerect.right  = SCREENSPLIT2 + 24;
+		linerect.top    = 13 << 4;
+		linerect.bottom = linerect.top + 16;
+		SetTextColor(dc,color[colorscheme][COLOR_STATIC]);
+		SetBkColor(dc,color[colorscheme][COLOR_DATABKG]);
+		ExtTextOut(dc, linerect.left, linerect.top, ETO_CLIPPED | ETO_OPAQUE, &linerect,
+			"Cyc", 3, NULL);
+		wsprintf(valuestr, "%ld", g_dCumulativeCycles);
+		linerect.left  = SCREENSPLIT2 + 28;
+		linerect.right = SCREENSPLIT2 + 150;
+		SetTextColor(dc,color[colorscheme][COLOR_DATATEXT]);
+		ExtTextOut(dc, linerect.left, linerect.top, ETO_CLIPPED | ETO_OPAQUE, &linerect,
+				 valuestr, strlen(valuestr), NULL);
+  }
   FrameReleaseDC();
 }
 
@@ -2023,6 +2077,7 @@ void DebugProcessCommand (int keycode) {
   }
   else switch (keycode) {
     case VK_SPACE:  needsfullrefresh = CmdTrace(0);     break;
+	case VK_F10:    needsfullrefresh = CmdTraceOut(0);  break;
     case VK_PRIOR:  needsfullrefresh = CmdPageUp(0);    break;
     case VK_NEXT:   needsfullrefresh = CmdPageDown(0);  break;
     case VK_UP:     needsfullrefresh = CmdLineUp(0);    break;

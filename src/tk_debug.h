@@ -15,6 +15,9 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+// Variáveis
+extern unsigned __int64 g_dCumulativeCycles;
+
 // Protótipos
 void	DebugBegin ();
 void	DebugContinueStepping ();

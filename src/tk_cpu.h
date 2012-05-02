@@ -16,8 +16,7 @@
 
 #include "tk_stdhdr.h"
 
-typedef	struct _regsrec
-{
+typedef	struct _regsrec {
 	BYTE a;	  // accumulator
 	BYTE x;	  // index X
 	BYTE y;	  // index Y
@@ -27,7 +26,7 @@ typedef	struct _regsrec
 } regsrec, *regsptr;
 
 // Variáveis Externas
-extern regsrec	regs;	
+extern regsrec	regs;
 
 #ifdef CPUDEBUG
 extern FILE *arquivocpu;

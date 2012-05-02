@@ -16,6 +16,7 @@
 #define edtExpEndFinal                  1012
 #define edtImpEndInicial                1013
 #define cbScanLines                     1014
+#define cbColarRapido                   1015
 #define mnuResetar                      40001
 #define mnuConfig                       40002
 #define mnuDepurar                      40003

@@ -23,7 +23,7 @@
 #define	 MODE_STEPPING	4
 
 // Versão, Titulo e Arq de Rom
-#define	VERSIONSTRING "0.0.0.1"
+#define	VERSIONSTRING "0.2"
 #define	TITULO        "Emulador TK2000"
 #define	NOMEARQROM    "TK2000.rom"
 #define	NOMEARQSYM    "TK2000.sym"

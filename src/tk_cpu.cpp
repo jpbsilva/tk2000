@@ -25,6 +25,7 @@
 #include "tk_cpu.h"
 #include "tk_memoria.h"
 #include "tk_main.h"
+#include "tk_debug.h"
 
 #define  AF_SIGN       0x80
 #define  AF_OVERFLOW   0x40
@@ -68,6 +69,7 @@ int     flagsint  = 0;
                               | (flagz ? AF_ZERO     : 0);
 #define CYC(a)   cycles += a; \
 				 g_nCumulativeCycles += a; \
+				 g_dCumulativeCycles += a; \
 				 cumulativecycles += a;
 /*
 #define POP      (*(mem+((regs.sp >= 0x1FF) ? (regs.sp = 0x100) : ++regs.sp)))
@@ -106,6 +108,11 @@ int     flagsint  = 0;
 #define ZPG      addr = mem_readb(regs.pc++, 1);
 #define ZPGX     addr = (mem_readb(regs.pc++, 1)+regs.x) & 0xFF;
 #define ZPGY     addr = (mem_readb(regs.pc++, 1)+regs.y) & 0xFF;
+
+// Verifica se houve mudança de página, adicionando um ciclo extra
+#define BRANCHTAKEN	WORD pca = (regs.pc & 0xFF00);	 						\
+					regs.pc += addr;										\
+					if ((regs.pc & 0xFF00) != pca) { CYC(1) }
 
 /****************************************************************************
 *
@@ -151,18 +158,18 @@ int     flagsint  = 0;
                  flagc = (val > 0xFF);                                      \
                  SETNZ(val)                                                 \
                  regs.a = (BYTE)val;
-#define BCC      if (!flagc) regs.pc += addr;
-#define BCS      if ( flagc) regs.pc += addr;
-#define BEQ      if ( flagz) regs.pc += addr;
+#define BCC      if (!flagc){ BRANCHTAKEN CYC(1) }
+#define BCS      if ( flagc){ BRANCHTAKEN CYC(1) }
+#define BEQ      if ( flagz){ BRANCHTAKEN CYC(1) }
 #define BIT      val   = READ;                                              \
                  flagz = !(regs.a & val);                                   \
                  flagn = val & 0x80;                                        \
                  flagv = val & 0x40;
 #define BITI     flagz = !(regs.a & READ);
 
-#define BMI      if ( flagn) regs.pc += addr;
-#define BNE      if (!flagz) regs.pc += addr;
-#define BPL      if (!flagn) regs.pc += addr;
+#define BMI      if ( flagn){ BRANCHTAKEN CYC(1) }
+#define BNE      if (!flagz){ BRANCHTAKEN CYC(1) }
+#define BPL      if (!flagn){ BRANCHTAKEN CYC(1) }
 #define BRA      regs.pc += addr;
 #define BRK      PUSH(++regs.pc >> 8)                                         \
                  PUSH(regs.pc & 0xFF)                                       \
@@ -171,8 +178,8 @@ int     flagsint  = 0;
                  PUSH(regs.ps)                                              \
                  regs.ps |= AF_INTERRUPT;                                   \
                  regs.pc = mem_readw(0xFFFE, 1);
-#define BVC      if (!flagv) regs.pc += addr;
-#define BVS      if ( flagv) regs.pc += addr;
+#define BVC      if (!flagv){ BRANCHTAKEN CYC(1) }
+#define BVS      if ( flagv){ BRANCHTAKEN CYC(1) }
 #define CLC      flagc = 0;
 #define CLD      regs.ps &= ~AF_DECIMAL;
 #define CLI      regs.ps &= ~AF_INTERRUPT;
@@ -374,7 +381,7 @@ DWORD InternalCpuExecute (DWORD totalcycles)
 			case 0x0D:       ABS ORA       CYC(4)  break;
 			case 0x0E:       ABS ASL       CYC(6)  break;
 			case 0x0F:       INVALID3      CYC(1)  break;
-			case 0x10:       REL BPL       CYC(3)  break;
+			case 0x10:       REL BPL       CYC(2)  break;
 			case 0x11:       INDY ORA      CYC(5)  break;
 			case 0x12:       INVALID2      CYC(5)  break;
 			case 0x13:       INVALID2      CYC(1)  break;
@@ -406,7 +413,7 @@ DWORD InternalCpuExecute (DWORD totalcycles)
 			case 0x2D:       ABS AND       CYC(2)  break;
 			case 0x2E:       ABS ROL       CYC(6)  break;
 			case 0x2F:       INVALID3      CYC(1)  break;
-			case 0x30:       REL BMI       CYC(3)  break;
+			case 0x30:       REL BMI       CYC(2)  break;
 			case 0x31:       INDY AND      CYC(5)  break;
 			case 0x32:       INVALID2      CYC(5)  break;
 			case 0x33:       INVALID2      CYC(1)  break;
@@ -438,7 +445,7 @@ DWORD InternalCpuExecute (DWORD totalcycles)
 			case 0x4D:       ABS EOR       CYC(4)  break;
 			case 0x4E:       ABS LSR       CYC(6)  break;
 			case 0x4F:       INVALID3      CYC(1)  break;
-			case 0x50:       REL BVC       CYC(3)  break;
+			case 0x50:       REL BVC       CYC(2)  break;
 			case 0x51:       INDY EOR      CYC(5)  break;
 			case 0x52:       INVALID2      CYC(5)  break;
 			case 0x53:       INVALID2      CYC(1)  break;
@@ -470,7 +477,7 @@ DWORD InternalCpuExecute (DWORD totalcycles)
 			case 0x6D:       ABS ADC       CYC(4)  break;
 			case 0x6E:       ABS ROR       CYC(6)  break;
 			case 0x6F:       INVALID3      CYC(1)  break;
-			case 0x70:       REL BVS       CYC(3)  break;
+			case 0x70:       REL BVS       CYC(2)  break;
 			case 0x71:       INDY ADC      CYC(5)  break;
 			case 0x72:       INVALID2      CYC(5)  break;
 			case 0x73:       INVALID2      CYC(1)  break;
@@ -502,7 +509,7 @@ DWORD InternalCpuExecute (DWORD totalcycles)
 			case 0x8D:       ABS STA       CYC(4)  break;
 			case 0x8E:       ABS STX       CYC(4)  break;
 			case 0x8F:       INVALID3      CYC(1)  break;
-			case 0x90:       REL BCC       CYC(3)  break;
+			case 0x90:       REL BCC       CYC(2)  break;
 			case 0x91:       INDY STA      CYC(6)  break;
 			case 0x92:       INVALID2      CYC(5)  break;
 			case 0x93:       INVALID2      CYC(1)  break;
@@ -534,7 +541,7 @@ DWORD InternalCpuExecute (DWORD totalcycles)
 			case 0xAD:       ABS LDA       CYC(4)  break;
 			case 0xAE:       ABS LDX       CYC(4)  break;
 			case 0xAF:       INVALID3      CYC(1)  break;
-			case 0xB0:       REL BCS       CYC(3)  break;
+			case 0xB0:       REL BCS       CYC(2)  break;
 			case 0xB1:       INDY LDA      CYC(5)  break;
 			case 0xB2:       INVALID2      CYC(5)  break;
 			case 0xB3:       INVALID2      CYC(1)  break;
@@ -566,7 +573,7 @@ DWORD InternalCpuExecute (DWORD totalcycles)
 			case 0xCD:       ABS CMP       CYC(4)  break;
 			case 0xCE:       ABS DEC       CYC(5)  break;
 			case 0xCF:       INVALID3      CYC(1)  break;
-			case 0xD0:       REL BNE       CYC(3)  break;
+			case 0xD0:       REL BNE       CYC(2)  break;
 			case 0xD1:       INDY CMP      CYC(5)  break;
 			case 0xD2:       INVALID2      CYC(5)  break;
 			case 0xD3:       INVALID2      CYC(1)  break;
@@ -598,7 +605,7 @@ DWORD InternalCpuExecute (DWORD totalcycles)
 			case 0xED:       ABS SBC       CYC(4)  break;
 			case 0xEE:       ABS INC       CYC(6)  break;
 			case 0xEF:       INVALID3      CYC(1)  break;
-			case 0xF0:       REL BEQ       CYC(3)  break;
+			case 0xF0:       REL BEQ       CYC(2)  break;
 			case 0xF1:       INDY SBC      CYC(5)  break;
 			case 0xF2:       INVALID2      CYC(5)  break;
 			case 0xF3:       INVALID2      CYC(1)  break;
@@ -724,4 +731,3 @@ void CpuReinitialize ()
 }
 
 // EOF
-
