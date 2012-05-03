@@ -323,6 +323,7 @@ void KeybQueueKeypress (int key, BOOL down, BOOL ascii) {
 
 		case VK_DOISPONTOS:
 			key = ':';
+			shift = -shift;
 			break;
 
 		case VK_DECIMAL:

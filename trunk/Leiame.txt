@@ -23,7 +23,7 @@ BUGS:
   Qualquer bug achado no software favor entrar em contato com o autor.
 
 CONTATANDO O AUTOR:
-  Favor enviar um e-mail para fbelavenuto@gmx.net
+  Favor enviar um e-mail para belavenuto@gmail.com
 
 COPYRIGHT:
   Copyright (C) 1994-96, Michael O'Brien. All rights reserved.

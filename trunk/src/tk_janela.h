@@ -23,7 +23,7 @@
 #define	 DRAW_TITLE			4
 
 // Variáveis Externas
-extern int	  fullscreen;
+//extern int	  fullscreen;
 extern HWND	  framewindow;
 
 // Protótipos

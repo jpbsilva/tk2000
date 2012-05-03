@@ -227,6 +227,10 @@ BEGIN
         MENUITEM "&Importar...",                mnuImportar
         MENUITEM "&Exportar...",                mnuExportar
     END
+    POPUP "&Utilitários"
+    BEGIN
+        MENUITEM "&Extrair programa BASIC atual", mnuExtrairBasic
+    END
     POPUP "A&juda"
     BEGIN
         MENUITEM "Conteúdo (F1)",               mnuAjuda
