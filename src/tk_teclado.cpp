@@ -68,6 +68,7 @@ static bool g_bPasteFromClipboard = false;
 static BYTE  bKBOUT_ant = 1;
 static unsigned __int64 ultCicloP = 0, ultCicloL = 0;
 static BYTE  bCTRL   = 0;
+static bool  controlStatus = false;
 static TVk   Teclas[256];
 static Convs Conversoes[256];
 static unsigned char matriz[8];				/* Matriz que mantém o status de cada tecla pressionada, já no formato da matriz do TK2000 */
@@ -222,16 +223,19 @@ void KeybInicia(void)
 	CONFTECLA(2,  2,  0,        'R')
 	CONFTECLA(2,  1,  0,        'T')
 	CONFTECLA(2,  0,  0,        ' ')
+
 	CONFTECLA(1,  5,  0,        'A')
 	CONFTECLA(1,  4,  0,        'S')
 	CONFTECLA(1,  3,  0,        'D')
 	CONFTECLA(1,  2,  0,        'F')
 	CONFTECLA(1,  1,  0,        'G')
+
 	CONFTECLA(0,  5,  0,        'Z')
 	CONFTECLA(0,  4,  0,        'X')
 	CONFTECLA(0,  3,  0,        'C')
 	CONFTECLA(0,  2,  0,        'V')
 	CONFTECLA(0,  1,  0,        'B')
+	CONFTECLA(0,  0,  0,        0xFF)		// SHIFT
 
 #undef CONFTECLA
 
@@ -272,6 +276,9 @@ void KeybQueueKeypress (int key, BOOL down, BOOL ascii) {
 
 	int shift = 0;
 	if (!ascii) {
+		controlStatus = (GetKeyState(VK_CONTROL) < 0);
+		if (key == VK_CONTROL)
+			return;
 		shift = GetKeyState(VK_SHIFT);
 
 		if (down && ((key == VK_CANCEL && GetKeyState(VK_CONTROL) < 0) || key == VK_F12)) {
@@ -292,7 +299,11 @@ void KeybQueueKeypress (int key, BOOL down, BOOL ascii) {
 		if (g_bClipboardActive)		/* Não inserir outras teclas enquanto estiver colando */
 			return;
 
-	switch(key) {
+		switch(key) {
+		case VK_SHIFT:
+			key = 0xFF;
+			break;
+
 		case VK_UP:
 			key = 0x0B;
 			break;
@@ -322,8 +333,7 @@ void KeybQueueKeypress (int key, BOOL down, BOOL ascii) {
 			break;
 
 		case VK_DOISPONTOS:
-			key = ':';
-			shift = -shift;
+			key = ';';
 			break;
 
 		case VK_DECIMAL:
@@ -432,7 +442,7 @@ BYTE __stdcall KeybKBIN (WORD programcounter, BYTE address, BYTE write, BYTE val
 	//BYTE result = TapeCASIN(programcounter, address, write, value);
 	BYTE result = 0;
 
-	if (bCTRL && (GetKeyState(VK_CONTROL) < 0) && !g_bClipboardActive)
+	if (bCTRL && controlStatus && !g_bClipboardActive)
 		return result | 0x01;
 
 	for (l = 0; l < 8; l++) {
