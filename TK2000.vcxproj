@@ -244,6 +244,7 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="src\utilitarios.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="recursos\resource.h" />
@@ -264,6 +265,7 @@
     <ClInclude Include="src\tk_teclado.h" />
     <ClInclude Include="src\tk_timer.h" />
     <ClInclude Include="src\tk_video.h" />
+    <ClInclude Include="src\utilitarios.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="recursos\Charset.bmp" />

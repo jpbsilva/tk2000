@@ -38,6 +38,7 @@
 #include "tk_impressora.h"
 #include "tk_disco.h"
 #include "../recursos/resource.h"
+#include "utilitarios.h"
 
 // Definições
 #define	WIDTH_DIALOGO	240
@@ -462,37 +463,7 @@ LRESULT CALLBACK FrameWndProc (HWND   window,
 		case WM_SYSKEYUP:
 			PostMessage(window, WM_KEYUP, wparam, lparam);
 		break;
-/*
-		case WM_USER+1:
-		{
-			HCURSOR oldcursor;
 
-			if (mode != MODE_LOGO)
-			{
-				Som_Mute();
-				if (MessageBox((HWND)framewindow,
-							"Ao rodar o benchmarks o estado da máquina será "
-							"resetado, causando perda de qualquer trabalho "
-							"não salvo.\n\n"
-							"Você quer continuar?",
-							"Benchmarks",
-							MB_ICONQUESTION | MB_YESNO | MB_SETFOREGROUND) == IDNO)
-				{
-					break;
-				}
-				Som_Demute();
-			}
-			UpdateWindow(window);
-			ResetMachineState();
-			mode = MODE_LOGO;
-			DrawStatusArea((HDC)0,DRAW_TITLE);
-			oldcursor = SetCursor(LoadCursor(0,IDC_WAIT));
-			VideoBenchmark();
-			ResetMachineState();
-			SetCursor(oldcursor);
-		break;
-		}
-*/
 		case WM_USER+2:
 			if (mode != MODE_LOGO)
 			{
@@ -834,13 +805,11 @@ BOOL CALLBACK ExportarDlgProc(  HWND   window,
 
 // Funções Internas
 //===========================================================================
-void ProcessaMenu(int ID, HWND window)
-{
-	switch(ID)
-	{
+void ProcessaMenu(int ID, HWND window) {
+	switch(ID) {
 		case mnuSair:
 			SendMessage(window, WM_CLOSE, 0, 0);
-		break;
+			break;
 
 		case mnuDepurar:
 			if (mode == MODE_LOGO)
@@ -855,14 +824,14 @@ void ProcessaMenu(int ID, HWND window)
 			}
 			DrawStatusArea((HDC)0,DRAW_TITLE);
 			return;
-		break;
+			break;
 
 		case mnuConfig:
 			DialogBox(instance,
 						"DIALOGO_CONFIG",
 						framewindow,
 						(DLGPROC)ConfigDlgProc);
-		break;
+			break;
 
 		case mnuSobre:
 			MessageBox(window,
@@ -873,7 +842,7 @@ void ProcessaMenu(int ID, HWND window)
 						"Sobre o TK2000",
 						MB_OK | MB_ICONINFORMATION
 						);
-		break;
+			break;
 
 		case mnuResetar:
 			if (mode == MODE_LOGO)
@@ -887,11 +856,11 @@ void ProcessaMenu(int ID, HWND window)
 			DrawStatusArea((HDC)0,DRAW_TITLE);
 			VideoRedrawScreen();
 			resettiming = 1;
-		break;
+			break;
 
 		case mnuCor:
 			VideoChooseColor();
-		break;
+			break;
 
 		case mnuImportar:
 			DialogBox(instance,
@@ -899,60 +868,93 @@ void ProcessaMenu(int ID, HWND window)
 						framewindow,
 						(DLGPROC)ImportarDlgProc);
 		
-		break;
+			break;
 
 		case mnuExportar:
 			DialogBox(instance,
 						"DIALOGO_EXPORTAR",
 						framewindow,
 						(DLGPROC)ExportarDlgProc);
-		break;
+			break;
 
 		case mnuDisco1:
 			DiskSelect(0);
 			DrawStatusArea(0, DRAW_BACKGROUND | DRAW_LEDS);
-		break;
+			break;
 
 		case mnuRemDisco1:
 			DiskRemove(0);
 			DrawStatusArea(0, DRAW_BACKGROUND | DRAW_LEDS);
-		break;
+			break;
 
 		case mnuVolDisco1:
 			DiskEscolheVolume(0);
-		break;
+			break;
 
 		case mnuDisco2:
 			DiskSelect(1);
 			DrawStatusArea(0, DRAW_BACKGROUND | DRAW_LEDS);
-		break;
+			break;
 
 		case mnuRemDisco2:
 			DiskRemove(1);
 			DrawStatusArea(0, DRAW_BACKGROUND | DRAW_LEDS);
-		break;
+			break;
 
 		case mnuVolDisco2:
 			DiskEscolheVolume(1);
-		break;
+			break;
 
 		case mnuTapeInserir:
 			TapeSelect();
-		break;
+			break;
 
 		case mnuTapeRemove:
 			TapeRemove();
-		break;
+			break;
 
 		case mnuTapeRew:
 			TapeBotao(TB_REW);
-		break;
+			break;
 
 		case mnuTapeStop:
 			TapeBotao(TB_STOP);
-		break;
+			break;
+
+		case mnuExtrairBasic:
+			if (mode == MODE_RUNNING) {
+				char *applesoft = UtilExtrairApplesoft();
+				if (!applesoft) {
+					FrameMostraMensagemErro("Erro ao extrair!");
+				} else {
+					if (!OpenClipboard((HWND)framewindow)) {
+						FrameMostraMensagemErro("Erro ao abrir a Área de Transferência");
+						free(applesoft);
+					} else {
+						EmptyClipboard();
+						HGLOBAL hText = GlobalAlloc(GMEM_DDESHARE, strlen(applesoft)+1);
+						if (hText == NULL) {
+							FrameMostraMensagemErro("Erro ao abrir a Área de Transferência");
+							CloseClipboard();
+							free(applesoft);
+						} else {
+							char *pText = (char *)GlobalLock(hText);
+							strcpy(pText, LPCSTR(applesoft));
+							GlobalUnlock(hText); 
+							SetClipboardData(CF_TEXT, hText);
+							CloseClipboard();
+							free(applesoft);
+							FrameMostraMensagemAdvertencia("Copiado para área de transferência!");
+						}
+					}
+				}
+			} else {
+				FrameMostraMensagemErro("Somente no modo de execução");
+			}
+
+			break;
 	}
-	Som_Demute();
+	//Som_Demute();
 }
 
 //===========================================================================

@@ -1,6 +1,5 @@
 Lista de Tarefas:
 
- - Emular ciclos extras nos opcodes Bxx e mudança de página
  - Tirar opcodes da versão 65C02
  - Consertar mistura de cores
  - Implementar TK2000 de 128KB

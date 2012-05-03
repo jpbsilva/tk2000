@@ -3,7 +3,7 @@ echo Limpando
 del /s *.o *.obj *.pdb *.exp *.ncb *.dcu *.dof *.opt *.pch *.plg *.idb *.~* *.sbr *.ilk *.bsc
 
 set nomedist=TK2000
-set version=0.0.0.1
+set version=0.2
 set exclude=Docs
 
 echo Criando Distribuicao
