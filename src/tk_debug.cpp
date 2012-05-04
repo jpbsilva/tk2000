@@ -549,8 +549,7 @@ BOOL CheckBreakpoint (WORD address, BOOL memory)
 }
 
 //===========================================================================
-BOOL CheckJump (WORD targetaddress)
-{
+BOOL CheckJump (WORD targetaddress) {
 	WORD savedpc = regs.pc;
 	unsigned __int64 saved_cc1 = g_nCumulativeCycles;
 	unsigned __int64 saved_cc2 = g_dCumulativeCycles;
@@ -1220,80 +1219,81 @@ void DrawCommandLine (HDC dc, int line) {
 
 //===========================================================================
 WORD DrawDisassembly (HDC dc, int line, WORD offset, LPTSTR text) {
-  char addresstext[40] = "";
-  char bytestext[10]   = "";
-  char fulltext[50]    = "";
-  BYTE  inst            = mem_readb(offset, 0);
-  int   addrmode        = instruction[inst].addrmode;
-  WORD  bytes           = addressmode[addrmode].bytes;
+	char addresstext[40] = "";
+	char bytestext[10]   = "";
+	char fulltext[50]    = "";
+	BYTE  inst            = mem_readb(offset, 0);
+	int   addrmode        = instruction[inst].addrmode;
+	WORD  bytes           = addressmode[addrmode].bytes;
 
-  // BUILD A STRING CONTAINING THE TARGET ADDRESS OR SYMBOL
-  if (addressmode[addrmode].format[0]) {
-    WORD address = mem_readw(offset+1, 0);
-    if (bytes == 2)
-      address &= 0xFF;
-    if (addrmode == ADDR_REL)
-      address = offset+2+(int)(signed char)address;
-    if (strstr(addressmode[addrmode].format,"%s"))
-      wsprintf(addresstext,
-               addressmode[addrmode].format,
-               (LPCTSTR)GetSymbol(address,bytes));
-    else
-      wsprintf(addresstext,
-               addressmode[addrmode].format,
-               (unsigned)address);
-    if ((addrmode == ADDR_REL) && (offset == regs.pc) && CheckJump(address))
-      if (address > offset)
-        strcat(addresstext," \x19");
-      else
-        strcat(addresstext," \x18");
-  }
+	// BUILD A STRING CONTAINING THE TARGET ADDRESS OR SYMBOL
+	if (addressmode[addrmode].format[0]) {
+		WORD address = mem_readw(offset+1, 0);
+		if (bytes == 2)
+			address &= 0xFF;
+		if (addrmode == ADDR_REL)
+			address = offset+2+(int)(signed char)address;
+		if (strstr(addressmode[addrmode].format,"%s"))
+			wsprintf(addresstext,
+					addressmode[addrmode].format,
+					(LPCTSTR)GetSymbol(address,bytes));
+		else
+			wsprintf(addresstext,
+					addressmode[addrmode].format,
+					(unsigned)address);
+		if ((addrmode == ADDR_REL) && (offset == regs.pc) && CheckJump(address)) {
+			if (address > offset)
+				strcat(addresstext," \xCB");		// Seta para baixo AF
+			else
+				strcat(addresstext," \xCA");		// Seta para cima AE
+		}
+	}
 
-  // BUILD A STRING CONTAINING THE ACTUAL BYTES THAT MAKE UP THIS
-  // INSTRUCTION
-  {
-    int loop = 0;
-    while (loop < bytes)
-      wsprintf(bytestext+strlen(bytestext),
-               "%02X",
-               (unsigned)mem_readb(offset+(loop++), 0));
-    while (strlen(bytestext) < 6)
-      strcat(bytestext," ");
-  }
+	// BUILD A STRING CONTAINING THE ACTUAL BYTES THAT MAKE UP THIS
+	// INSTRUCTION
+	{
+	int loop = 0;
+	while (loop < bytes)
+		wsprintf(bytestext+strlen(bytestext),
+				"%02X",
+				(unsigned)mem_readb(offset+(loop++), 0));
+	while (strlen(bytestext) < 6)
+		strcat(bytestext," ");
+	}
 
-  // PUT TOGETHER ALL OF THE DIFFERENT ELEMENTS THAT WILL MAKE UP THE LINE
-  wsprintf(fulltext,
-           "%04X  %s  %-9s %s %s",
-           (unsigned)offset,
-           (LPCTSTR)bytestext,
-           (LPCTSTR)GetSymbol(offset,0),
-           (LPCTSTR)instruction[inst].mnemonic,
-           (LPCTSTR)addresstext);
-  if (text)
-    strcpy(text,fulltext);
+	// PUT TOGETHER ALL OF THE DIFFERENT ELEMENTS THAT WILL MAKE UP THE LINE
+	wsprintf(fulltext,
+			"%04X  %s  %-9s %s %s",
+			(unsigned)offset,
+			(LPCTSTR)bytestext,
+			(LPCTSTR)GetSymbol(offset,0),
+			(LPCTSTR)instruction[inst].mnemonic,
+			(LPCTSTR)addresstext);
+	if (text)
+	strcpy(text,fulltext);
 
-  // DRAW THE LINE
-  if (dc) {
-    RECT linerect;
-    BOOL bp;
+	// DRAW THE LINE
+	if (dc) {
+	RECT linerect;
+	BOOL bp;
 
-    linerect.left   = 0;
-    linerect.top    = line << 4;
-    linerect.right  = SCREENSPLIT1-14;
-    linerect.bottom = linerect.top+16;
-    bp = usingbp && CheckBreakpoint(offset,offset == regs.pc);
-    SetTextColor(dc,color[colorscheme][(offset == regs.pc) ? COLOR_INSTBKG
-                                                           : bp ? COLOR_INSTBP
-                                                                : COLOR_INSTTEXT]);
-    SetBkColor(dc,color[colorscheme][(offset == regs.pc) ? bp ? COLOR_INSTBP
-                                                              : COLOR_INSTTEXT
-                                                         : COLOR_INSTBKG]);
-    ExtTextOut(dc,12,linerect.top,
-               ETO_CLIPPED | ETO_OPAQUE,&linerect,
-               fulltext,strlen(fulltext),NULL);
-  }
+	linerect.left   = 0;
+	linerect.top    = line << 4;
+	linerect.right  = SCREENSPLIT1-14;
+	linerect.bottom = linerect.top+16;
+	bp = usingbp && CheckBreakpoint(offset,offset == regs.pc);
+	SetTextColor(dc,color[colorscheme][(offset == regs.pc) ? COLOR_INSTBKG
+															: bp ? COLOR_INSTBP
+																: COLOR_INSTTEXT]);
+	SetBkColor(dc,color[colorscheme][(offset == regs.pc) ? bp ? COLOR_INSTBP
+																: COLOR_INSTTEXT
+															: COLOR_INSTBKG]);
+	ExtTextOut(dc,12,linerect.top,
+				ETO_CLIPPED | ETO_OPAQUE,&linerect,
+				fulltext,strlen(fulltext),NULL);
+	}
 
-  return bytes;
+	return bytes;
 }
 
 //===========================================================================

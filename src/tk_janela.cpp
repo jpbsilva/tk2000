@@ -373,18 +373,6 @@ LRESULT CALLBACK FrameWndProc (HWND   window,
 				else if (JoyUsingMouse() &&
 							((mode == MODE_RUNNING) || (mode == MODE_STEPPING)))
 					SetUsingCursor(1);
-			// Verifica se o usuario clicou sobre o icone da tecla CAPSLOCK
-//			if ((x >= (xx + STATUSXPOS4)) && (x <= (xx + STATUSXPOS4 + 30)) &&
-//				(y >= (yy + STATUSYPOS1)) && (y <= (yy + STATUSYPOS1 + 8)))
-//			{
-//				KeybToggleCapsLock();
-//			}
-			// Verifica se o usuario clicou sobre o icone da tecla MODE
-//			if ((x >= (xx + STATUSXPOS4)) && (x <= (xx + STATUSXPOS4 + 30)) &&
-//				(y >= (yy + STATUSYPOS3)) && (y <= (yy + STATUSYPOS3 + 8)))
-//			{
-//				KeybToggleModeKey();
-//			}
 		}
 		break;
 
@@ -493,6 +481,14 @@ LRESULT CALLBACK FrameWndProc (HWND   window,
 			}
 		}
 		break;
+
+		case WM_SETFOCUS:
+			KeybUnset();
+			break;
+
+		case WM_KILLFOCUS:
+			KeybUnset();
+			break;
 	}
 	return DefWindowProc(window,message,wparam,lparam);
 }
@@ -662,7 +658,7 @@ BOOL CALLBACK ImportarDlgProc(  HWND   window,
 		case WM_COMMAND:
 			switch (LOWORD(wparam))
 			{
-				WORD  EndInicial;
+				int  EndInicial;
 				char EndI[MAX_PATH];
 
 				case IDOK:
@@ -681,6 +677,7 @@ BOOL CALLBACK ImportarDlgProc(  HWND   window,
 					}
 					else
 						EndInicial = atoi(EndI);
+					EndInicial &= 0xFFFF;
 					if (EndInicial < 0xBFFF && strlen(EndI))
 					{
 						if (!MemImportar(EndInicial))
@@ -692,7 +689,7 @@ BOOL CALLBACK ImportarDlgProc(  HWND   window,
 					else
 					{
 						MessageBox(window,
-									"Digite os valores corretos",
+									"Digite os valores corretamente",
 									"Erro",
 									MB_OK | MB_ICONWARNING);
 					}
@@ -818,8 +815,8 @@ void ProcessaMenu(int ID, HWND window) {
 				DebugProcessChar('\x1B');
 			else if (mode == MODE_DEBUG)
 				ProcessaMenu(mnuResetar, window);
-			else
-			{
+			else {
+				KeybUnset();
 				DebugBegin();
 			}
 			DrawStatusArea((HDC)0,DRAW_TITLE);
@@ -847,8 +844,7 @@ void ProcessaMenu(int ID, HWND window) {
 		case mnuResetar:
 			if (mode == MODE_LOGO)
 				DiskBoot();
-			else
-			if (mode == MODE_RUNNING)
+			else if (mode == MODE_RUNNING)
 				ResetMachineState();
 			if ((mode == MODE_DEBUG) || (mode == MODE_STEPPING))
 				DebugEnd();
@@ -1011,8 +1007,7 @@ void CreateGdiObjects(void)
 }
 
 //===========================================================================
-void DeleteGdiObjects()
-{
+void DeleteGdiObjects() {
 	DeleteObject(btnfacebrush);
 	DeleteObject(btnfacepen);
 	DeleteObject(btnhighlightpen);
@@ -1021,16 +1016,14 @@ void DeleteGdiObjects()
 }
 
 //===========================================================================
-void ResetMachineState()
-{
+void ResetMachineState() {
 	MemReset();
 	VideoResetState();
 	JoyReset();
 }
 
 //===========================================================================
-void DrawBitmapRect (HDC dc, int x, int y, LPRECT rect, HBITMAP bitmap)
-{
+void DrawBitmapRect (HDC dc, int x, int y, LPRECT rect, HBITMAP bitmap) {
 	HDC memdc = CreateCompatibleDC(dc);
 	SelectObject(memdc,bitmap);
 	BitBlt(dc,x,y,
@@ -1044,8 +1037,7 @@ void DrawBitmapRect (HDC dc, int x, int y, LPRECT rect, HBITMAP bitmap)
 }
 
 //===========================================================================
-void DrawStatusArea(HDC passdc, int drawflags)
-{
+void DrawStatusArea(HDC passdc, int drawflags) {
 	HDC  dc;
 	int  x;
 	int  y;
@@ -1063,8 +1055,7 @@ void DrawStatusArea(HDC passdc, int drawflags)
 	DiskGetLightStatus(&drive1,&drive2);
 	TapePegaStatusLed(&TapeLed);
 
-	if (drawflags & DRAW_BACKGROUND)
-	{
+	if (drawflags & DRAW_BACKGROUND) {
 		char temp[MAX_PATH];
 
 		SelectObject(dc, GetStockObject(NULL_PEN));
@@ -1096,19 +1087,16 @@ void DrawStatusArea(HDC passdc, int drawflags)
 				temp,
 				strlen(temp));
 	}
-	if (drawflags & DRAW_LEDS)
-	{
+	if (drawflags & DRAW_LEDS) {
 		RECT rect = {0,0,8,8};
 		DrawBitmapRect(dc, x + STATUSXPOS1, y + STATUSYPOS1, &rect, leds[drive1]);
 		DrawBitmapRect(dc, x + STATUSXPOS1, y + STATUSYPOS2, &rect, leds[drive2]);
 		DrawBitmapRect(dc, x + STATUSXPOS2, y + STATUSYPOS1, &rect, leds[TapeLed]);
 	}
-	if (drawflags & DRAW_TITLE)
-	{
+	if (drawflags & DRAW_TITLE) {
 		char title[40];
 		strcpy(title,TITULO);
-		switch (mode)
-		{
+		switch (mode) {
 			case MODE_PAUSED:
 				Som_Mute();
 				strcat(title," [Pausado]");
@@ -1135,8 +1123,7 @@ void DrawStatusArea(HDC passdc, int drawflags)
 }
 
 //===========================================================================
-void Drawframewindow(void)
-{
+void Drawframewindow(void) {
 	PAINTSTRUCT ps;
 	HDC dc;
 
@@ -1161,14 +1148,12 @@ void Drawframewindow(void)
 }
 
 //===========================================================================
-void DrawCrosshairs(int x, int y)
-{
+void DrawCrosshairs(int x, int y) {
 	//
 }
 
 //===========================================================================
-void EnableTrackbar (HWND window, BOOL enable)
-{
+void EnableTrackbar (HWND window, BOOL enable) {
 	int loop = slVel;
 
 	EnableWindow(GetDlgItem(window,slVel), enable);
@@ -1177,15 +1162,13 @@ void EnableTrackbar (HWND window, BOOL enable)
 }
 
 //===========================================================================
-void SetUsingCursor (BOOL newvalue)
-{
+void SetUsingCursor (BOOL newvalue) {
 	static HCURSOR cursorvelho;
 
 	if (newvalue == usingcursor)
 		return;
 	usingcursor = newvalue;
-	if (usingcursor)
-	{
+	if (usingcursor) {
 		RECT rect;
 		POINT pt;
 
@@ -1202,9 +1185,7 @@ void SetUsingCursor (BOOL newvalue)
 		GetCursorPos(&pt);
 		ScreenToClient((HWND)framewindow,&pt);
 //		DrawCrosshairs(pt.x,pt.y);
-	}
-	else
-	{
+	} else {
 		DrawCrosshairs(0,0);
 //		ShowCursor(1);
 		SetCursor(cursorvelho);
@@ -1214,12 +1195,10 @@ void SetUsingCursor (BOOL newvalue)
 }
 
 //===========================================================================
-void FillComboBox(HWND window, int controlid, LPCTSTR choices, int currentchoice)
-{
+void FillComboBox(HWND window, int controlid, LPCTSTR choices, int currentchoice) {
 	HWND combowindow = GetDlgItem(window,controlid);
 	SendMessage(combowindow,CB_RESETCONTENT,0,0);
-	while (*choices)
-	{
+	while (*choices) {
 		SendMessage(combowindow,CB_ADDSTRING,0,(LPARAM)(LPCTSTR)choices);
 		choices += strlen(choices)+1;
 	}
@@ -1232,8 +1211,7 @@ void FillComboBox(HWND window, int controlid, LPCTSTR choices, int currentchoice
 //
 
 //===========================================================================
-void FrameCreateWindow()
-{
+void FrameCreateWindow() {
 	int xpos, ypos, width, height;
 
 	width  = VIDEOWIDTH  +  (GetSystemMetrics(SM_CXBORDER)<<1) + 4;
@@ -1262,10 +1240,8 @@ void FrameCreateWindow()
 }
 
 //================================================================================
-int FrameGetDC()
-{
-  if (!framedc)
-  {
+int FrameGetDC() {
+  if (!framedc)  {
     framedc = GetDC((HWND)framewindow);
 //    SetViewportOrgEx(framedc,viewportx,viewporty,NULL);
   }
@@ -1273,20 +1249,17 @@ int FrameGetDC()
 }
 
 //================================================================================
-int FrameGetVideoDC(char* *addr, LONG *pitch)
-{
+int FrameGetVideoDC(char* *addr, LONG *pitch) {
 	return FrameGetDC();
 }
 
 //================================================================================
-void FrameRefreshStatus(int drawflags)
-{
+void FrameRefreshStatus(int drawflags) {
 	DrawStatusArea((HDC)0,drawflags);
 }
 
 //================================================================================
-void FrameRegisterClass()
-{
+void FrameRegisterClass() {
   WNDCLASSEX wndclass;
 
   ZeroMemory(&wndclass,sizeof(WNDCLASSEX));
@@ -1305,10 +1278,8 @@ void FrameRegisterClass()
 }
 
 //================================================================================
-void FrameReleaseDC()
-{
-  if (framedc)
-  {
+void FrameReleaseDC() {
+  if (framedc) {
 //    SetViewportOrgEx(framedc,0,0,NULL);
     ReleaseDC((HWND)framewindow,framedc);
     framedc = (HDC)0;
@@ -1316,8 +1287,7 @@ void FrameReleaseDC()
 }
 
 //================================================================================
-void FrameReleaseVideoDC()
-{
+void FrameReleaseVideoDC() {
 /*
   if (active && !pintando)
   {
@@ -1335,19 +1305,15 @@ void FrameReleaseVideoDC()
 }
 
 //================================================================================
-void FrameMenuDiskete(int Habilitar)
-{
-	if (Habilitar)
-	{
+void FrameMenuDiskete(int Habilitar) {
+	if (Habilitar) {
 		HabilitaMenu(mnuDisco1);
 		HabilitaMenu(mnuDisco2);
 		HabilitaMenu(mnuRemDisco1);
 		HabilitaMenu(mnuRemDisco2);
 		HabilitaMenu(mnuVolDisco1);
 		HabilitaMenu(mnuVolDisco2);
-	}
-	else
-	{
+	} else {
 		DesabilitaMenu(mnuDisco1);
 		DesabilitaMenu(mnuDisco2);
 		DesabilitaMenu(mnuRemDisco1);
@@ -1358,8 +1324,7 @@ void FrameMenuDiskete(int Habilitar)
 }
 
 //================================================================================
-void FrameMostraMensagemAdvertencia(char *Mensagem)
-{
+void FrameMostraMensagemAdvertencia(char *Mensagem) {
 	Som_Mute();
 	MessageBox((HWND)framewindow,
 				Mensagem,
@@ -1369,8 +1334,7 @@ void FrameMostraMensagemAdvertencia(char *Mensagem)
 }
 
 //================================================================================
-void FrameMostraMensagemErro(char *Mensagem)
-{
+void FrameMostraMensagemErro(char *Mensagem) {
 	Som_Mute();
 	MessageBox((HWND)framewindow,
 				Mensagem,
@@ -1385,8 +1349,7 @@ void FrameMostraMensagemErro(char *Mensagem)
  *  by Fábio Belavenuto
  */
 //================================================================================
-int FramePerguntaInteiro(char *Titulo, int Default)
-{
+int FramePerguntaInteiro(char *Titulo, int Default) {
 	int			X, Y, result;
 	WNDCLASSEX	wndclass;
 	MSG			Mensagem;
@@ -1476,26 +1439,21 @@ int FramePerguntaInteiro(char *Titulo, int Default)
 
 	sprintf(temp,"%d",Default);
 	SetWindowText(edtValor,temp);
-	while (1) 
-	{
-		if (BotaoApertado == 2)
-		{
+	while (1) {
+		if (BotaoApertado == 2) {
 			DestroyWindow(Janela);
 			UnregisterClass("DialogoInteiro", instance);
 			return Default;
 		}
-		if (BotaoApertado == 1)
-		{
+		if (BotaoApertado == 1) {
 			GetWindowText(edtValor, temp, MAX_PATH);
 			result = atoi(temp);
 			DestroyWindow(Janela);
 			UnregisterClass("DialogoInteiro", instance);
 			return result;
 		}
-		if (PeekMessage(&Mensagem,0,0,0,PM_REMOVE))
-		{
-			if (Mensagem.message == WM_QUIT)
-			{
+		if (PeekMessage(&Mensagem,0,0,0,PM_REMOVE)) {
+			if (Mensagem.message == WM_QUIT) {
 				UnregisterClass("DialogoInteiro", instance);
 				return Default;
 			}

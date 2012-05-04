@@ -134,16 +134,22 @@ static char ClipboardCurrChar(bool bIncPtr)
 	return nKey;
 }
 
-//
-// ----- ALL GLOBALLY ACCESSIBLE FUNCTIONS ARE BELOW THIS LINE -----
-//
-
 //===========================================================================
 void ClipboardInitiatePaste() {
 	if (g_bClipboardActive)
 		return;
 
 	g_bPasteFromClipboard = true;
+}
+
+
+//
+// ----- ALL GLOBALLY ACCESSIBLE FUNCTIONS ARE BELOW THIS LINE -----
+//
+
+//===========================================================================
+void KeybUnset() {
+	memset(matriz, 0, 8);
 }
 
 //===========================================================================

@@ -23,6 +23,7 @@ extern int ColarRapido;
 void KeybInicia(void);
 void KeybAtualiza(DWORD totalcycles);
 void KeybFinaliza(void);
+void KeybUnset();
 void KeybQueueKeypress (int key, BOOL down, BOOL ascii);
 bool KeybIsPasting();
 
