@@ -446,7 +446,7 @@ BYTE __stdcall KeybKBIN (WORD programcounter, BYTE address, BYTE write, BYTE val
 	int  l;
 	static int romv = 0;		/* Contabiliza quantos scans completos foram feitos pela ROM */
 	//BYTE result = TapeCASIN(programcounter, address, write, value);
-	BYTE result = 0;
+	BYTE result = 0x80;
 
 	if (bCTRL && controlStatus && !g_bClipboardActive)
 		return result | 0x01;
