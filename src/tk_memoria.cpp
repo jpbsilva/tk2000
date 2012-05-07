@@ -747,7 +747,7 @@ BOOL MemImportar(WORD EndInicial)
 		}
 		fseek(Arquivo, 0, SEEK_END);
 		TamMem = ftell(Arquivo);
-		if ((EndInicial+TamMem) > 0xBFFF)
+		if ((EndInicial+TamMem) > 0xC000)
 		{
 			FrameMostraMensagemErro("O conteúdo do arquivo excede a capacidade de memória do TK2000");
 			return -1;

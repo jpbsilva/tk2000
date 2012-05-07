@@ -725,8 +725,8 @@ BOOL CALLBACK ExportarDlgProc(  HWND   window,
 		case WM_COMMAND:
 			switch (LOWORD(wparam))
 			{
-				WORD  EndInicial;
-				WORD  EndFinal;
+				int  EndInicial;
+				int  EndFinal;
 				char EndI[MAX_PATH];
 				char EndF[MAX_PATH];
 
@@ -759,6 +759,8 @@ BOOL CALLBACK ExportarDlgProc(  HWND   window,
 					}
 					else
 						EndFinal = atoi(EndF);
+					EndInicial &= 0xFFFF;
+					EndFinal &= 0xFFFF;
 					if (EndInicial < 0xC000 && EndFinal < 0xC000 &&
 						(EndInicial || EndFinal) &&
 						(EndInicial < EndFinal))
