@@ -1,0 +1,1 @@
+Este emulador é para um clone do MPF II feito aqui no Brasil em 1985 pela Microdigital, o TK2000 (Baseado no AppleWin, por Michael O Brien e Tom Charlesworth)
